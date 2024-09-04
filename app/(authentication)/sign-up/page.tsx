@@ -27,7 +27,7 @@ import { Schema } from "@/amplify/data/resource";
 
 const client = generateClient<Schema>();
 
-type UserInput = Omit<Schema["User"], "id" | "inputPrices">;
+type UserInput = Omit<Schema["User"]["type"], "id" | "inputPrices">;
 
 export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
@@ -68,19 +68,19 @@ export default function SignUp() {
   }
 
   return (
-    <Card className="w-[350px] mx-auto mt-10">
-      <CardHeader>
-        <CardTitle>Sign Up</CardTitle>
+    <Card className="w-[450px] mx-auto mt-10 shadow-lg">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl">Sign Up</CardTitle>
         <CardDescription>Create your account to get started.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 ">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="form-item space-x-4">
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <input
@@ -97,7 +97,7 @@ export default function SignUp() {
               control={form.control}
               name="phoneNumber"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="form-item space-x-4">
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
                     <input type="tel" placeholder="+1234567890" {...field} />
@@ -110,7 +110,7 @@ export default function SignUp() {
               control={form.control}
               name="firstName"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="form-item space-x-4">
                   <FormLabel>First Name</FormLabel>
                   <FormControl>
                     <input placeholder="John" {...field} />
@@ -123,7 +123,7 @@ export default function SignUp() {
               control={form.control}
               name="lastName"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="form-item space-x-4">
                   <FormLabel>Last Name</FormLabel>
                   <FormControl>
                     <input placeholder="Doe" {...field} />
