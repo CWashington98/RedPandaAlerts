@@ -55,6 +55,15 @@ module.exports = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			}
+  		},
+  		keyframes: {
+  			breathe: {
+  				'0%, 100%': { transform: 'scale(1)' },
+  				'50%': { transform: 'scale(1.05)' },
+  			}
+  		},
+  		animation: {
+  			breathe: 'breathe 4s ease-in-out infinite'
   		}
   	}
   },

@@ -20,10 +20,13 @@ const schema = a
 
     StockPrice: a
       .model({
+        id: a.id().required(),
         stockName: a.string().required(),
-        priceStart: a.float().required(),
-        priceMid: a.float().required(),
-        priceEnd: a.float().required(),
+        tickerSymbol: a.string().required(),
+        isCrypto: a.boolean().default(false),
+        quickEntryPrice: a.float().required(),
+        swingTradePrice: a.float().required(),
+        loadTheBoatPrice: a.float().required(),
         month: a.string().required(),
         year: a.integer().required(),
         user: a.belongsTo("User", ["userId"]),
