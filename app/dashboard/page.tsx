@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { processStockData } from "@/utils/stockDataProcessor";
+import { preprocessStockData } from "@/utils/preprocessStockData";
 
 const client = generateClient<Schema>();
 
@@ -173,10 +173,10 @@ export default function Dashboard() {
     addNewStock(newStock);
   }
 
-  function handleTextSubmit() {
-    const processedData = processStockData(textInput);
+  async function handleTextSubmit() {
+    const preprocessedData = preprocessStockData(textInput);
     
-    if (processedData.length === 0) {
+    if (preprocessedData.length === 0) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -185,45 +185,69 @@ export default function Dashboard() {
       return;
     }
 
-    let successCount = 0;
-    let errorCount = 0;
-
-    processedData.forEach(async (stock) => {
-      try {
-        await addNewStock(stock);
-        successCount++;
-      } catch (error) {
-        console.error(`Error adding stock ${stock.stockName}:`, error);
-        errorCount++;
-      }
-    });
-
-    if (successCount > 0) {
-      toast({
-        title: "Stocks Added",
-        description: `Successfully added ${successCount} stock${successCount > 1 ? 's' : ''}.`,
+    try {
+      // Call the stockDataProcessor Lambda
+      const response = await fetch('/api/processStockData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ preprocessedData }),
       });
-    }
 
-    if (errorCount > 0) {
+      if (!response.ok) {
+        throw new Error('Failed to process stock data');
+      }
+
+      const processedData = await response.json();
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const stock of processedData) {
+        try {
+          await addNewStock(stock);
+          successCount++;
+        } catch (error) {
+          console.error(`Error adding stock ${stock.stockName}:`, error);
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast({
+          title: "Stocks Added",
+          description: `Successfully added ${successCount} stock${successCount > 1 ? 's' : ''}.`,
+        });
+      }
+
+      if (errorCount > 0) {
+        toast({
+          variant: "destructive",
+          title: "Some Stocks Not Added",
+          description: `Failed to add ${errorCount} stock${errorCount > 1 ? 's' : ''}. Please check the console for details.`,
+        });
+      }
+
+      if (successCount > 0 || errorCount > 0) {
+        fetchStocks(); // Refresh the stocks list
+        setIsModalOpen(false);
+      }
+
+      // If some lines were skipped during processing
+      if (processedData.length < textInput.split('\n').filter(line => line.trim() !== '').length) {
+        toast({
+          variant: "warning",
+          title: "Some Lines Skipped",
+          description: "Some lines in your input were skipped due to invalid format. Please check your input.",
+        });
+      }
+    } catch (error) {
+      console.error("Error processing stock data:", error);
       toast({
         variant: "destructive",
-        title: "Some Stocks Not Added",
-        description: `Failed to add ${errorCount} stock${errorCount > 1 ? 's' : ''}. Please check the console for details.`,
-      });
-    }
-
-    if (successCount > 0 || errorCount > 0) {
-      fetchStocks(); // Refresh the stocks list
-      setIsModalOpen(false);
-    }
-
-    // If some lines were skipped during processing
-    if (processedData.length < textInput.split('\n').filter(line => line.trim() !== '').length) {
-      toast({
-        variant: "warning",
-        title: "Some Lines Skipped",
-        description: "Some lines in your input were skipped due to invalid format. Please check your input.",
+        title: "Error",
+        description: "Failed to process stock data. Please try again.",
       });
     }
   }

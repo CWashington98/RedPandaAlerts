@@ -1,9 +1,10 @@
 import { Handler } from "aws-lambda";
-import OpenAI from 'openai';
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const bedrockClient = new BedrockRuntimeClient({ region: "us-east-1" }); // Replace with your preferred region
 
 type ProcessedStockData = {
   stockName: string;
@@ -37,7 +38,9 @@ export const handler: Handler = async (event: any) => {
   }
 };
 
-async function processStockData(preprocessedData: any[]): Promise<ProcessedStockData[]> {
+async function processStockData(
+  preprocessedData: any[]
+): Promise<ProcessedStockData[]> {
   const jsonSchema = {
     type: "array",
     items: {
@@ -48,10 +51,17 @@ async function processStockData(preprocessedData: any[]): Promise<ProcessedStock
         isCrypto: { type: "boolean" },
         quickEntryPrice: { type: "number" },
         swingTradePrice: { type: "number" },
-        loadTheBoatPrice: { type: "number" }
+        loadTheBoatPrice: { type: "number" },
       },
-      required: ["stockName", "tickerSymbol", "isCrypto", "quickEntryPrice", "swingTradePrice", "loadTheBoatPrice"]
-    }
+      required: [
+        "stockName",
+        "tickerSymbol",
+        "isCrypto",
+        "quickEntryPrice",
+        "swingTradePrice",
+        "loadTheBoatPrice",
+      ],
+    },
   };
 
   const prompt = `
@@ -61,33 +71,58 @@ async function processStockData(preprocessedData: any[]): Promise<ProcessedStock
     3. Whether it's a cryptocurrency (isCrypto)
 
     Here's the list of stocks with their price data:
-    ${preprocessedData.map(stock => 
-      `${stock.stockName}: Quick Entry: $${stock.quickEntryPrice}, Swing Trade: $${stock.swingTradePrice}, Load the Boat: $${stock.loadTheBoatPrice}`
-    ).join('\n')}
+    ${preprocessedData
+      .map(
+        (stock) =>
+          `${stock.stockName}: Quick Entry: $${stock.quickEntryPrice}, Swing Trade: $${stock.swingTradePrice}, Load the Boat: $${stock.loadTheBoatPrice}`
+      )
+      .join("\n")}
 
     Please format the response as a JSON array of objects, with each object containing the above information for a single stock, along with the provided price data. The response should strictly adhere to the following JSON schema:
 
     ${JSON.stringify(jsonSchema, null, 2)}
 
     Ensure that the stockName is the full company name, the tickerSymbol is accurate, and isCrypto is correctly set to true for cryptocurrencies and false for stocks.
+
+    Here's an example of the expected JSON structure for a single stock:
+    {
+      "stockName": "Apple Inc.",
+      "tickerSymbol": "AAPL",
+      "isCrypto": false,
+      "quickEntryPrice": 157.69,
+      "swingTradePrice": 202.99,
+      "loadTheBoatPrice": 212.26
+    }
+
+    Please provide the complete JSON array for all stocks in the list.
   `;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.7,
-  });
-
-  const content = response.choices[0].message.content;
-  if (!content) {
-    throw new Error("No content in OpenAI response");
-  }
+  const params = {
+    modelId: "anthropic.claude-3-5-sonnet-20240620-v1:0",
+    contentType: "application/json",
+    accept: "application/json",
+    body: JSON.stringify({
+      prompt: `Human: ${prompt}\n\nAssistant: Certainly! I'll process the stock data and provide the requested information in the specified JSON format. Here's the processed data:`,
+      max_tokens: 4096,
+      temperature: 0.7,
+    }),
+  };
 
   try {
+    const command = new InvokeModelCommand(params);
+    const response = await bedrockClient.send(command);
+
+    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+    const content = responseBody.completion;
+
+    if (!content) {
+      throw new Error("No content in Bedrock response");
+    }
+
     const processedData = JSON.parse(content);
     return processedData;
   } catch (error) {
-    console.error("Error parsing OpenAI response:", error);
-    throw new Error("Failed to parse OpenAI response");
+    console.error("Error processing stock data with Bedrock:", error);
+    throw new Error("Failed to process stock data with Bedrock");
   }
 }

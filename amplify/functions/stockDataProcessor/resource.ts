@@ -5,7 +5,17 @@ export const stockDataProcessor = defineFunction({
   entry: './handler.ts',
   memoryMB: 512,  // Increased memory for API calls
   timeoutSeconds: 300,  // Increased timeout for potentially longer operations
+  permissions: [
+    {
+      actions: [
+        'bedrock:InvokeModel'
+      ],
+      resources: [
+        'arn:aws:bedrock:*:*:model/anthropic.claude-3-sonnet-20240229-v1:0'
+      ]
+    }
+  ],
   environment: {
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',  // Make sure to set this in your environment
+    // Add any environment variables if needed
   },
 });
