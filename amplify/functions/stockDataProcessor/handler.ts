@@ -3,8 +3,11 @@ import {
   BedrockRuntimeClient,
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
+import { MODEL_ID } from "./resource";
+// import { Schema } from "../../data/resource";
+// import { generateClient } from "aws-amplify/api";
 
-const bedrockClient = new BedrockRuntimeClient({ region: "us-east-1" }); // Replace with your preferred region
+// const client = generateClient<Schema>();
 
 type ProcessedStockData = {
   stockName: string;
@@ -17,13 +20,17 @@ type ProcessedStockData = {
 
 export const handler: Handler = async (event: any) => {
   try {
-    const { preprocessedData } = event;
-
-    if (!preprocessedData || !Array.isArray(preprocessedData)) {
+    console.log("event", event);
+    const { preprocessedData, userId } = event.arguments;
+    console.log("preprocessedData", preprocessedData);
+    if (!preprocessedData || !Array.isArray(JSON.parse(preprocessedData))) {
       throw new Error("Invalid input: preprocessedData must be an array");
     }
+    console.log("preprocessedData", JSON.parse(preprocessedData));
+    const processedData = await processStockData(JSON.parse(preprocessedData));
 
-    const processedData = await processStockData(preprocessedData);
+    // Commenting out the database insertion
+    // const createdStocks = await createStockPrices(processedData, userId);
 
     return {
       statusCode: 200,
@@ -98,17 +105,18 @@ async function processStockData(
   `;
 
   const params = {
-    modelId: "anthropic.claude-3-5-sonnet-20240620-v1:0",
+    modelId: MODEL_ID,
     contentType: "application/json",
     accept: "application/json",
     body: JSON.stringify({
-      prompt: `Human: ${prompt}\n\nAssistant: Certainly! I'll process the stock data and provide the requested information in the specified JSON format. Here's the processed data:`,
+      prompt: `Human: ${prompt}\n`,
       max_tokens: 4096,
-      temperature: 0.7,
+      temperature: 0.1,
     }),
   };
 
   try {
+    const bedrockClient = new BedrockRuntimeClient({ region: "us-east-1" });
     const command = new InvokeModelCommand(params);
     const response = await bedrockClient.send(command);
 
@@ -126,3 +134,33 @@ async function processStockData(
     throw new Error("Failed to process stock data with Bedrock");
   }
 }
+
+// Commenting out the createStockPrices function
+/*
+async function createStockPrices(stocks: ProcessedStockData[], userId: string): Promise<Schema["StockPrice"]["type"][] | null> {
+  const currentDate = new Date();
+  const currentMonth = currentDate.toLocaleString("default", { month: "long" });
+  const currentYear = currentDate.getFullYear();
+
+  const createdStocks: Schema["StockPrice"]["type"][] = [];
+
+  for (const stock of stocks) {
+    try {
+      const createdStock = await client.models.StockPrice.create({
+        ...stock,
+        month: currentMonth,
+        year: currentYear,
+        userId: userId
+      });
+      if (!createdStock.data) {
+        throw new Error(`Failed to create stock ${stock.stockName}\n Error: ${createdStock.errors}`);
+      }
+      createdStocks.push(createdStock.data);
+    } catch (error) {
+      console.error(`Error creating stock ${stock.stockName}:`, error);
+    }
+  }
+
+  return null;
+}
+*/

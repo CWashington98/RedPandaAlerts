@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { generateClient } from "aws-amplify/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,12 +21,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { preprocessStockData } from "@/utils/preprocessStockData";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Moon, Sun } from "lucide-react";
 
 const client = generateClient<Schema>();
 
 type StockPrice = Schema["StockPrice"]["type"];
+type ProcessedStockData = Schema["ProcessedStockData"]["type"];
 
 export default function Dashboard() {
+  const { fetchedUser } = useAuthContext();
   const [stocks, setStocks] = useState<StockPrice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [immediateAlerts, setImmediateAlerts] = useState(true);
@@ -45,6 +50,13 @@ export default function Dashboard() {
   });
   const [textInput, setTextInput] = useState("");
   const [jsonInput, setJsonInput] = useState("");
+  const { theme, toggleTheme } = useTheme();
+  const [processedData, setProcessedData] = useState<ProcessedStockData[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [editedProcessedData, setEditedProcessedData] = useState<
+    ProcessedStockData[]
+  >([]);
+  const editedDataRef = useRef<ProcessedStockData[]>([]);
 
   useEffect(() => {
     fetchStocks();
@@ -142,15 +154,22 @@ export default function Dashboard() {
 
   async function addNewStock(stock: Partial<StockPrice>) {
     const currentDate = new Date();
-    const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
+    const currentMonth = currentDate.toLocaleString("default", {
+      month: "long",
+    });
     const currentYear = currentDate.getFullYear();
 
     try {
       await client.models.StockPrice.create({
-        ...stock,
+        stockName: stock.stockName || "",
+        tickerSymbol: stock.tickerSymbol || "",
+        quickEntryPrice: stock.quickEntryPrice || 0,
+        swingTradePrice: stock.swingTradePrice || 0,
+        loadTheBoatPrice: stock.loadTheBoatPrice || 0,
+        isCrypto: stock.isCrypto || false,
         month: currentMonth,
         year: currentYear,
-        id: crypto.randomUUID(),
+        userId: "",
       });
       toast({
         title: "Success",
@@ -174,80 +193,88 @@ export default function Dashboard() {
   }
 
   async function handleTextSubmit() {
-    const preprocessedData = preprocessStockData(textInput);
-    
-    if (preprocessedData.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No valid stock data found. Please check your input and try again.",
-      });
-      return;
-    }
-
+    setIsProcessing(true);
+    console.log("handleTextSubmit, ", fetchedUser?.id);
     try {
-      // Call the stockDataProcessor Lambda
-      const response = await fetch('/api/processStockData', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ preprocessedData }),
+      const preprocessedData = preprocessStockData(textInput);
+      console.log("preprocessedData", preprocessedData);
+      
+      // Ensure preprocessedData is an array
+      if (!Array.isArray(preprocessedData)) {
+        throw new Error("Preprocessed data is not an array");
+      }
+
+      const response = await client.queries.processStockData({
+        preprocessedData: preprocessedData.map((stock) => JSON.stringify(stock)),
+        userId: fetchedUser?.id!,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to process stock data');
-      }
-
-      const processedData = await response.json();
-
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (const stock of processedData) {
-        try {
-          await addNewStock(stock);
-          successCount++;
-        } catch (error) {
-          console.error(`Error adding stock ${stock.stockName}:`, error);
-          errorCount++;
-        }
-      }
-
-      if (successCount > 0) {
-        toast({
-          title: "Stocks Added",
-          description: `Successfully added ${successCount} stock${successCount > 1 ? 's' : ''}.`,
-        });
-      }
-
-      if (errorCount > 0) {
-        toast({
-          variant: "destructive",
-          title: "Some Stocks Not Added",
-          description: `Failed to add ${errorCount} stock${errorCount > 1 ? 's' : ''}. Please check the console for details.`,
-        });
-      }
-
-      if (successCount > 0 || errorCount > 0) {
-        fetchStocks(); // Refresh the stocks list
-        setIsModalOpen(false);
-      }
-
-      // If some lines were skipped during processing
-      if (processedData.length < textInput.split('\n').filter(line => line.trim() !== '').length) {
-        toast({
-          variant: "warning",
-          title: "Some Lines Skipped",
-          description: "Some lines in your input were skipped due to invalid format. Please check your input.",
-        });
-      }
+      console.log("response", response);
+      const processedData = response.data as ProcessedStockData[];
+      setProcessedData(processedData);
+      setIsModalOpen(false);
     } catch (error) {
       console.error("Error processing stock data:", error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to process stock data. Please try again.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
+  function handleProcessedDataChange(
+    index: number,
+    field: keyof ProcessedStockData,
+    value: string | number | boolean
+  ) {
+    const updatedData = [...editedProcessedData];
+    updatedData[index] = {
+      ...updatedData[index],
+      [field]: value,
+    };
+    setEditedProcessedData(updatedData);
+    editedDataRef.current = updatedData;
+  }
+
+  async function handleFinalSubmit() {
+    try {
+      const currentDate = new Date();
+      const currentMonth = currentDate.toLocaleString("default", {
+        month: "long",
+      });
+      const currentYear = currentDate.getFullYear();
+
+      const stocksToAdd = editedDataRef.current.map((stock) => ({
+        ...stock,
+        month: currentMonth,
+        year: currentYear,
+        userId: fetchedUser?.id!,
+      }));
+
+      const createdStocksResponses = await Promise.all(
+        stocksToAdd.map((stock) => client.models.StockPrice.create(stock))
+      );
+
+      const createdStocks = createdStocksResponses
+        .map((response) => response.data)
+        .filter((stock): stock is StockPrice => stock !== null);
+
+      setStocks((prevStocks) => [...prevStocks, ...createdStocks]);
+      setProcessedData([]);
+      setEditedProcessedData([]);
+
+      toast({
+        title: "Success",
+        description: `${createdStocks.length} stocks added successfully.`,
+      });
+    } catch (error) {
+      console.error("Error adding stocks:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add stocks. Please try again.",
       });
     }
   }
@@ -270,8 +297,17 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Your Stock Dashboard</h1>
+    <div className="container mx-auto p-4 bg-background text-foreground min-h-screen">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Your Stock Dashboard</h1>
+        <Button onClick={toggleTheme} variant="outline" size="icon">
+          {theme === "light" ? (
+            <Moon className="h-[1.2rem] w-[1.2rem]" />
+          ) : (
+            <Sun className="h-[1.2rem] w-[1.2rem]" />
+          )}
+        </Button>
+      </div>
       <div className="mb-4">
         <Switch
           checked={immediateAlerts}
@@ -307,7 +343,12 @@ export default function Dashboard() {
                       <Input
                         id="stockName"
                         value={newStock.stockName}
-                        onChange={(e) => setNewStock({...newStock, stockName: e.target.value})}
+                        onChange={(e) =>
+                          setNewStock({
+                            ...newStock,
+                            stockName: e.target.value,
+                          })
+                        }
                         required
                       />
                     </div>
@@ -316,7 +357,12 @@ export default function Dashboard() {
                       <Input
                         id="tickerSymbol"
                         value={newStock.tickerSymbol}
-                        onChange={(e) => setNewStock({...newStock, tickerSymbol: e.target.value})}
+                        onChange={(e) =>
+                          setNewStock({
+                            ...newStock,
+                            tickerSymbol: e.target.value,
+                          })
+                        }
                         required
                       />
                     </div>
@@ -324,7 +370,12 @@ export default function Dashboard() {
                       <Checkbox
                         id="isCrypto"
                         checked={newStock.isCrypto}
-                        onCheckedChange={(checked) => setNewStock({...newStock, isCrypto: checked as boolean})}
+                        onCheckedChange={(checked) =>
+                          setNewStock({
+                            ...newStock,
+                            isCrypto: checked as boolean,
+                          })
+                        }
                       />
                       <Label htmlFor="isCrypto">Is Cryptocurrency</Label>
                     </div>
@@ -417,9 +468,11 @@ export default function Dashboard() {
             {stocks.map((stock) => (
               <Card key={stock.id}>
                 <CardHeader>
-                  <CardTitle>{stock.stockName} ({stock.tickerSymbol})</CardTitle>
+                  <CardTitle>
+                    {stock.stockName} ({stock.tickerSymbol})
+                  </CardTitle>
                   <div className="text-sm text-muted-foreground">
-                    {stock.isCrypto ? 'Cryptocurrency' : 'Stock'}
+                    {stock.isCrypto ? "Cryptocurrency" : "Stock"}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -486,6 +539,123 @@ export default function Dashboard() {
             </Button>
           </div>
         </>
+      )}
+
+      {processedData?.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Processed Stock Data</h2>
+          <div className="space-y-4">
+            {processedData.map((stock, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <CardTitle>
+                    <Input
+                      value={
+                        editedProcessedData[index]?.stockName || stock.stockName
+                      }
+                      onChange={(e) =>
+                        handleProcessedDataChange(
+                          index,
+                          "stockName",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div>
+                      <Label>Ticker Symbol</Label>
+                      <Input
+                        value={
+                          editedProcessedData[index]?.tickerSymbol ||
+                          stock.tickerSymbol
+                        }
+                        onChange={(e) =>
+                          handleProcessedDataChange(
+                            index,
+                            "tickerSymbol",
+                            e.target.value
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="flex items-center">
+                      <Label className="mr-2">Crypto:</Label>
+                      <Checkbox
+                        checked={
+                          editedProcessedData[index]?.isCrypto || stock.isCrypto
+                        }
+                        onCheckedChange={(checked) =>
+                          handleProcessedDataChange(
+                            index,
+                            "isCrypto",
+                            checked as boolean
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Quick Entry Price</Label>
+                      <Input
+                        type="number"
+                        value={
+                          editedProcessedData[index]?.quickEntryPrice ||
+                          stock.quickEntryPrice
+                        }
+                        onChange={(e) =>
+                          handleProcessedDataChange(
+                            index,
+                            "quickEntryPrice",
+                            parseFloat(e.target.value)
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Swing Trade Price</Label>
+                      <Input
+                        type="number"
+                        value={
+                          editedProcessedData[index]?.swingTradePrice ||
+                          stock.swingTradePrice
+                        }
+                        onChange={(e) =>
+                          handleProcessedDataChange(
+                            index,
+                            "swingTradePrice",
+                            parseFloat(e.target.value)
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Load the Boat Price</Label>
+                      <Input
+                        type="number"
+                        value={
+                          editedProcessedData[index]?.loadTheBoatPrice ||
+                          stock.loadTheBoatPrice
+                        }
+                        onChange={(e) =>
+                          handleProcessedDataChange(
+                            index,
+                            "loadTheBoatPrice",
+                            parseFloat(e.target.value)
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <Button onClick={handleFinalSubmit} className="mt-4">
+            Add Stocks to Dashboard
+          </Button>
+        </div>
       )}
     </div>
   );

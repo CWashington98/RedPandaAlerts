@@ -25,6 +25,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Schema } from "@/amplify/data/resource";
+import { signIn } from "aws-amplify/auth";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 const client = generateClient<Schema>();
 
@@ -34,6 +36,7 @@ type LoginInput = {
 };
 
 export default function Login() {
+  const { checkUser } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -48,17 +51,19 @@ export default function Login() {
   async function onSubmit(values: LoginInput) {
     setIsLoading(true);
     try {
-      // Here you would typically call your authentication service
-      // For example: await Auth.Login(values.email, values.password)
-      // Since we don't have the actual authentication logic, I'll just simulate it
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      const cognitoUser = await signIn({
+        username: values.email,
+        password: values.password,
+      });
+      console.log("cognitoUser: ", cognitoUser);
+      await checkUser();
       toast({
         title: "Sign in successful",
         description: "Welcome back!",
       });
       router.push("/dashboard"); // Redirect to dashboard after successful sign in
     } catch (error) {
+      await checkUser();
       console.error("Error Loging in:", error);
       toast({
         variant: "destructive",
