@@ -1,35 +1,12 @@
-type PreprocessedStockData = {
-  stockName: string;
-  quickEntryPrice: number;
-  swingTradePrice: number;
-  loadTheBoatPrice: number;
-};
-
-export function preprocessStockData(input: string): PreprocessedStockData[] {
+export function preprocessStockData(input: string): string {
+  // Split the input into lines and remove empty lines
   const lines = input.split('\n').filter(line => line.trim() !== '');
-  const preprocessedData: PreprocessedStockData[] = [];
-  let currentStock: Partial<PreprocessedStockData> = {};
+  
+  // Clean each line: remove extra spaces and trim
+  const cleanedLines = lines.map(line => 
+    line.replace(/\s+/g, ' ').trim()
+  );
 
-  for (let line of lines) {
-    line = line.trim();
-    if (line === '') continue;
-
-    const priceMatch = line.match(/\$?(\d+(\.\d+)?)/);
-    if (priceMatch) {
-      const price = parseFloat(priceMatch[1]);
-      if (!currentStock.quickEntryPrice) {
-        currentStock.quickEntryPrice = price;
-      } else if (!currentStock.swingTradePrice) {
-        currentStock.swingTradePrice = price;
-      } else if (!currentStock.loadTheBoatPrice) {
-        currentStock.loadTheBoatPrice = price;
-        preprocessedData.push(currentStock as PreprocessedStockData);
-        currentStock = {};
-      }
-    } else if (!currentStock.stockName) {
-      currentStock.stockName = line;
-    }
-  }
-
-  return preprocessedData;
+  // Join the cleaned lines back into a single string
+  return cleanedLines.join('\n');
 }

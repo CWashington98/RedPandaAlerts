@@ -7,5 +7,7 @@ export const stockDataProcessor = defineFunction({
   entry: './handler.ts',
   memoryMB: 512,  // Increased memory for API calls
   timeoutSeconds: 300,  // Increased timeout for potentially longer operations
-
+  environment: {
+    MODEL_ID: MODEL_ID,
+  },
 });

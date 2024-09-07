@@ -12,6 +12,13 @@ const schema = a
       quickEntryPrice: a.float().required(),
       swingTradePrice: a.float().required(),
       loadTheBoatPrice: a.float().required(),
+      month: a.string().required(),
+      year: a.integer().required(),
+    }),
+
+    StockDataProcessorResponse: a.customType({
+      statusCode: a.integer().required(),
+      body: a.string().required(),
     }),
 
     User: a
@@ -22,6 +29,7 @@ const schema = a
         firstName: a.string().required(),
         lastName: a.string().required(),
         inputPrices: a.hasMany("StockPrice", ["userId"]),
+        alertFrequency: a.string().default("daily"),
       })
       .secondaryIndexes((index) => [index("phoneNumber"), index("email")])
       .authorization((allow) => [
@@ -36,8 +44,11 @@ const schema = a
         tickerSymbol: a.string().required(),
         isCrypto: a.boolean().default(false),
         quickEntryPrice: a.float().required(),
+        quickEntryHit: a.boolean().default(false),
         swingTradePrice: a.float().required(),
+        swingTradeHit: a.boolean().default(false),
         loadTheBoatPrice: a.float().required(),
+        loadTheBoatHit: a.boolean().default(false),
         month: a.string().required(),
         year: a.integer().required(),
         User: a.belongsTo("User", ["userId"]),
@@ -59,11 +70,11 @@ const schema = a
       .query()
       .authorization((allow) => [allow.authenticated()])
       .arguments({
-        preprocessedData: a.string().required(),
+        stockData: a.string().required(),
         userId: a.id().required(),
       })
       .handler(a.handler.function(stockDataProcessor))
-      .returns(a.ref("ProcessedStockData").required().array()),
+      .returns(a.ref("StockDataProcessorResponse").required()),
   })
   .authorization((allow) => [
     allow.resource(priceTracker),
@@ -77,6 +88,5 @@ export const data = defineData({
   schema,
   authorizationModes: {
     defaultAuthorizationMode: "userPool",
-    
   },
 });

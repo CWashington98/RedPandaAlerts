@@ -123,6 +123,8 @@ export default function SignUp() {
         },
         { authMode: "identityPool" }
       );
+      await autoSignIn();
+
       // manually call checkUser
       await checkUser();
       console.log("newUser", newUser);

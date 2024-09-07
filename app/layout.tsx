@@ -4,8 +4,10 @@ import "./app.css";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ThemeProvider } from '@/contexts/ThemeContext';
-import AuthContextProvider from '@/contexts/AuthContext';
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import AuthContextProvider from "@/contexts/AuthContext";
+import { StockDataProvider } from "@/contexts/StockDataContext";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,18 +22,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en">
+      <body>
         <AuthContextProvider>
-          <ThemeProvider>
-            <div className="flex flex-col min-h-screen bg-background text-foreground">
-              <Header />
-              <main className="flex-grow">
-                {children}
-              </main>
-              <Footer />
-            </div>
-          </ThemeProvider>
+          <StockDataProvider>
+            <ThemeProvider>
+              <div className="flex flex-col min-h-screen bg-background text-foreground">
+                <Header />
+                <main className="flex-grow">{children}</main>
+                <Toaster />
+                <Footer />
+              </div>
+            </ThemeProvider>
+          </StockDataProvider>
         </AuthContextProvider>
       </body>
     </html>
