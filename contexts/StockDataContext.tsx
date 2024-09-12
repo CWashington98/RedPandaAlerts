@@ -46,19 +46,21 @@ export function StockDataProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       let allStocks: StockPrice[] = [];
-      let nextToken: string | undefined = undefined;
-
+      let tokenToUse: string | undefined = undefined;
       do {
-        const { data: stockPrices, nextToken: nextTokenResponse } =
+        const {
+          data: stockPrices,
+          nextToken,
+        }: { data: StockPrice[]; nextToken?: string | null } =
           await client.models.StockPrice.list({
             filter: { userId: { eq: fetchedUser.id } },
             limit: 100,
-            nextToken: nextToken,
+            nextToken: tokenToUse,
           });
 
         allStocks = [...allStocks, ...stockPrices];
-        nextToken = nextTokenResponse || undefined;
-      } while (nextToken);
+        tokenToUse = nextToken ?? undefined;
+      } while (tokenToUse);
 
       setStocks(allStocks);
     } catch (error) {
