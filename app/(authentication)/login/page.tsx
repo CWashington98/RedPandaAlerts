@@ -11,7 +11,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "@/components/ui/card";
+} from "@/packages/web/components/ui/card";
 import {
   Form,
   FormControl,
@@ -19,10 +19,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { InputOTP } from "@/components/ui/input-otp";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+} from "@/packages/web/components/ui/form";
+import { InputOTP } from "@/packages/web/components/ui/input-otp";
+import { Input } from "@/packages/web/components/ui/input";
+import { Button } from "@/packages/web/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Schema } from "@/amplify/data/resource";
 import { signIn } from "aws-amplify/auth";

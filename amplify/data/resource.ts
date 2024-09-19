@@ -30,6 +30,7 @@ const schema = a
         lastName: a.string().required(),
         inputPrices: a.hasMany("StockPrice", ["userId"]),
         alertFrequency: a.string().default("daily"),
+        pushToken: a.string(), // Add pushToken field
       })
       .secondaryIndexes((index) => [index("phoneNumber"), index("email")])
       .authorization((allow) => [

@@ -3,6 +3,8 @@ import {
   BedrockRuntimeClient,
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
+import fetch from 'node-fetch';
+import { getUserExpoPushToken } from "@/services/userService";
 
 type ProcessedStockData = {
   stockName: string;
@@ -13,11 +15,41 @@ type ProcessedStockData = {
   loadTheBoatPrice: number;
   month: string;
   year: number;
+  userId: string;
 };
 
 type LambdaResponse = {
   statusCode: number;
   body: string;
+};
+
+const sendPushNotification = async (expoPushToken: string, message: string) => {
+  const payload = {
+    to: expoPushToken,
+    sound: 'default',
+    body: message,
+  };
+
+  try {
+    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-Encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    if (data?.data && data.data.status === 'ok') {
+      console.log('Push notification sent via Expo');
+    } else {
+      console.error('Error sending push notification via Expo:', data);
+    }
+  } catch (error) {
+    console.error('Error sending push notification:', error);
+  }
 };
 
 export const handler: Handler = async (event: any): Promise<LambdaResponse> => {
@@ -36,7 +68,23 @@ export const handler: Handler = async (event: any): Promise<LambdaResponse> => {
       };
     }
 
-    const processedData = await processStockData(stockData);
+    const processedData: ProcessedStockData[] = await processStockData(stockData);
+
+    // Delegate push notifications to priceAlert Lambda
+    for (const stock of processedData) {
+      if (/* condition to determine price hit */) {
+        //TODO: invoke with graphql instead
+        // await invokeFunction('priceAlert', {
+        //   userId: stock.userId,
+        //   stockName: stock.stockName,
+        //   quickEntryPrice: stock.quickEntryPrice,
+        //   // Add other relevant fields if necessary
+        // }).catch(error => {
+        //   console.error('Error invoking priceAlert function:', error);
+        // });
+      }
+      // Repeat for other price levels if needed
+    }
 
     return {
       statusCode: 200,

@@ -27,5 +27,15 @@ backend.stockDataProcessor.resources.lambda.addToRolePolicy(
   })
 );
 
+// Add the policy to the priceAlert Lambda function
+backend.priceAlert.resources.lambda.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ["bedrock:InvokeModel"],
+    resources: [
+      `arn:aws:bedrock:${Stack.of(backend.data).region}::foundation-model/${MODEL_ID}`,
+    ],
+  })
+);
 
 export default backend;
