@@ -6,6 +6,8 @@ type PriceAlertEvent = {
   userId: string;
   stockName: string;
   quickEntryPrice: number;
+  swingTradePrice?: number;
+  loadTheBoatPrice?: number;
   // Add other relevant fields as needed
 };
 
@@ -45,11 +47,19 @@ const sendPushNotification = async (expoPushToken: string, message: string) => {
 
 export const handler: Handler = async (event: any): Promise<LambdaResponse> => {
   try {
-    const { userId, stockName, quickEntryPrice } = event.arguments;
+    console.log(`EVENT: ${JSON.stringify(event)}`);
+    const { userId, stockName, quickEntryPrice, swingTradePrice, loadTheBoatPrice } = event.arguments;
 
     const pushToken = await getUserExpoPushToken(userId);
     if (pushToken) {
-      const message = `📈 ${stockName} has reached your Quick Entry Price of $${quickEntryPrice}`;
+      let message = `📈 ${stockName} has reached your Quick Entry Price of $${quickEntryPrice}`;
+      if (swingTradePrice) {
+        message += `\n📊 Swing Trade Price of $${swingTradePrice}`;
+      }
+      if (loadTheBoatPrice) {
+        message += `\n🚤 Load The Boat Price of $${loadTheBoatPrice}`;
+      }
+
       await sendPushNotification(pushToken, message);
       console.log('Push notification dispatched successfully.');
     } else {

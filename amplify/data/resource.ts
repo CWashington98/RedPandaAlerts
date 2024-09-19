@@ -10,8 +10,11 @@ const schema = a
       tickerSymbol: a.string().required(),
       isCrypto: a.boolean().required(),
       quickEntryPrice: a.float().required(),
+      quickEntryHit: a.boolean().default(false),
       swingTradePrice: a.float().required(),
+      swingTradeHit: a.boolean().default(false),
       loadTheBoatPrice: a.float().required(),
+      loadTheBoatHit: a.boolean().default(false),
       month: a.string().required(),
       year: a.integer().required(),
     }),
@@ -76,6 +79,29 @@ const schema = a
       })
       .handler(a.handler.function(stockDataProcessor))
       .returns(a.ref("StockDataProcessorResponse").required()),
+
+    Mutation: a
+      .type({
+        sendPriceAlert: a
+          .mutation()
+          .arguments({
+            input: a.ref("SendPriceAlertInput").required(),
+          })
+          .handler(a.handler.function(priceAlert))
+          .returns(a.ref("SendPriceAlertResponse").required()),
+      }),
+
+    SendPriceAlertInput: a.inputObject({
+      userId: a.id().required(),
+      stockName: a.string().required(),
+      quickEntryPrice: a.float().required(),
+      swingTradePrice: a.float().required(),
+      loadTheBoatPrice: a.float().required(),
+    }),
+
+    SendPriceAlertResponse: a.object({
+      success: a.boolean().required(),
+    }),
   })
   .authorization((allow) => [
     allow.resource(priceTracker),

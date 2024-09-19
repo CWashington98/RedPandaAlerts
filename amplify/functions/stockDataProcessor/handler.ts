@@ -72,18 +72,28 @@ export const handler: Handler = async (event: any): Promise<LambdaResponse> => {
 
     // Delegate push notifications to priceAlert Lambda
     for (const stock of processedData) {
-      if (/* condition to determine price hit */) {
-        //TODO: invoke with graphql instead
-        // await invokeFunction('priceAlert', {
-        //   userId: stock.userId,
-        //   stockName: stock.stockName,
-        //   quickEntryPrice: stock.quickEntryPrice,
-        //   // Add other relevant fields if necessary
-        // }).catch(error => {
-        //   console.error('Error invoking priceAlert function:', error);
-        // });
+      if (stock.loadTheBoatHit || stock.swingTradeHit || stock.quickEntryHit) {
+        await client.graphql({
+          query: `
+            mutation SendPriceAlert($input: SendPriceAlertInput!) {
+              sendPriceAlert(input: $input) {
+                success
+              }
+            }
+          `,
+          variables: {
+            input: {
+              userId: userId,
+              stockName: stock.stockName,
+              quickEntryPrice: stock.quickEntryPrice,
+              swingTradePrice: stock.swingTradePrice,
+              loadTheBoatPrice: stock.loadTheBoatPrice,
+            },
+          },
+        }).catch(error => {
+          console.error('Error invoking priceAlert mutation:', error);
+        });
       }
-      // Repeat for other price levels if needed
     }
 
     return {

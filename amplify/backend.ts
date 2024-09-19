@@ -27,13 +27,16 @@ backend.stockDataProcessor.resources.lambda.addToRolePolicy(
   })
 );
 
-// Add the policy to the priceAlert Lambda function
+// Add the policy to the priceAlert Lambda function for GraphQL access
 backend.priceAlert.resources.lambda.addToRolePolicy(
   new PolicyStatement({
     effect: Effect.ALLOW,
-    actions: ["bedrock:InvokeModel"],
+    actions: [
+      "appsync:GraphQL",
+      // Add any other necessary AppSync permissions
+    ],
     resources: [
-      `arn:aws:bedrock:${Stack.of(backend.data).region}::foundation-model/${MODEL_ID}`,
+      `arn:aws:appsync:${Stack.of(backend.data).region}:${Stack.of(backend.data).account}:apis/${process.env.API_REDPANDALEVELS_GRAPHQLAPIIDOUTPUT}/types/Mutation/fields/sendPriceAlert`,
     ],
   })
 );
