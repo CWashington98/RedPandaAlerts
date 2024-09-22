@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@web/components/ui/button";
-import { useTheme } from "@/contexts/ThemeContext";
 import { Moon, Sun, Menu } from "lucide-react";
+import { useTheme } from "next-themes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +14,7 @@ import {
 import AddPriceAlertModal from "@web/components/AddPriceAlertModal";
 
 export function Header() {
-  const { toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   function onAddNewPriceAlerts() {
@@ -87,7 +87,7 @@ export function Header() {
               variant="ghost"
               size="icon"
               aria-label="Toggle theme"
-              onClick={toggleTheme}
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             >
               <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
