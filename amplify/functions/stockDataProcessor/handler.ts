@@ -4,7 +4,6 @@ import {
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 import fetch from 'node-fetch';
-import { getUserExpoPushToken } from "@/services/userService";
 
 type ProcessedStockData = {
   stockName: string;
@@ -23,34 +22,34 @@ type LambdaResponse = {
   body: string;
 };
 
-const sendPushNotification = async (expoPushToken: string, message: string) => {
-  const payload = {
-    to: expoPushToken,
-    sound: 'default',
-    body: message,
-  };
+// const sendPushNotification = async (expoPushToken: string, message: string) => {
+//   const payload = {
+//     to: expoPushToken,
+//     sound: 'default',
+//     body: message,
+//   };
 
-  try {
-    const response = await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Accept-Encoding': 'gzip, deflate',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+//   try {
+//     const response = await fetch('https://exp.host/--/api/v2/push/send', {
+//       method: 'POST',
+//       headers: {
+//         Accept: 'application/json',
+//         'Accept-Encoding': 'gzip, deflate',
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify(payload),
+//     });
 
-    const data = await response.json();
-    if (data?.data && data.data.status === 'ok') {
-      console.log('Push notification sent via Expo');
-    } else {
-      console.error('Error sending push notification via Expo:', data);
-    }
-  } catch (error) {
-    console.error('Error sending push notification:', error);
-  }
-};
+//     const data = await response.json();
+//     if (data?.data && data.data.status === 'ok') {
+//       console.log('Push notification sent via Expo');
+//     } else {
+//       console.error('Error sending push notification via Expo:', data);
+//     }
+//   } catch (error) {
+//     console.error('Error sending push notification:', error);
+//   }
+// };
 
 export const handler: Handler = async (event: any): Promise<LambdaResponse> => {
   try {
@@ -70,31 +69,31 @@ export const handler: Handler = async (event: any): Promise<LambdaResponse> => {
 
     const processedData: ProcessedStockData[] = await processStockData(stockData);
 
-    // Delegate push notifications to priceAlert Lambda
-    for (const stock of processedData) {
-      if (stock.loadTheBoatHit || stock.swingTradeHit || stock.quickEntryHit) {
-        await client.graphql({
-          query: `
-            mutation SendPriceAlert($input: SendPriceAlertInput!) {
-              sendPriceAlert(input: $input) {
-                success
-              }
-            }
-          `,
-          variables: {
-            input: {
-              userId: userId,
-              stockName: stock.stockName,
-              quickEntryPrice: stock.quickEntryPrice,
-              swingTradePrice: stock.swingTradePrice,
-              loadTheBoatPrice: stock.loadTheBoatPrice,
-            },
-          },
-        }).catch(error => {
-          console.error('Error invoking priceAlert mutation:', error);
-        });
-      }
-    }
+    // // Delegate push notifications to priceAlert Lambda
+    // for (const stock of processedData) {
+    //   if (stock.loadTheBoatHit || stock.swingTradeHit || stock.quickEntryHit) {
+    //     await client.graphql({
+    //       query: `
+    //         mutation SendPriceAlert($input: SendPriceAlertInput!) {
+    //           sendPriceAlert(input: $input) {
+    //             success
+    //           }
+    //         }
+    //       `,
+    //       variables: {
+    //         input: {
+    //           userId: userId,
+    //           stockName: stock.stockName,
+    //           quickEntryPrice: stock.quickEntryPrice,
+    //           swingTradePrice: stock.swingTradePrice,
+    //           loadTheBoatPrice: stock.loadTheBoatPrice,
+    //         },
+    //       },
+    //     }).catch(error => {
+    //       console.error('Error invoking priceAlert mutation:', error);
+    //     });
+    //   }
+    // }
 
     return {
       statusCode: 200,

@@ -8,9 +8,9 @@
     "packages/shared"
   ],
   "scripts": {
-    "dev:web": "yarn workspace web dev",
-    "dev:mobile": "yarn workspace mobile expo start",
-    "dev": "concurrently \"yarn dev:web\" \"yarn dev:mobile\""
+    "dev:web": "npm run dev --workspace=packages/web",
+    "dev:mobile": "npx expo start --workspace=packages/mobile",
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:mobile\""
   },
   "dependencies": {
     "@anthropic-ai/bedrock-sdk": "^0.10.2",

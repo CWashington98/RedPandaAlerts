@@ -20,9 +20,13 @@
     ],
     "paths": {
       "@/*": ["./*"],
+      "@/web/*": ["./packages/web/*"],
+      "@/mobile/*": ["./packages/mobile/*"],
+      "@/shared/*": ["./packages/shared/*"],
+      "@/amplify/*": ["./amplify/*"]
     },
     "baseUrl": "."
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["packages/web/components/next-env.d.tscomponents/next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", "amplify"]
 }

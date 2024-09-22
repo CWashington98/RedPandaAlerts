@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@web/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Moon, Sun, Menu } from "lucide-react";
 import {
@@ -10,16 +10,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuthContext } from "@/contexts/AuthContext";
-import { generateClient } from "aws-amplify/api";
-import { Schema } from "@/amplify/data/resource";
-import AddPriceAlertModal from "./AddPriceAlertModal";
-
-const client = generateClient<Schema>();
+} from "./ui/dropdown-menu";
+import AddPriceAlertModal from "@web/components/AddPriceAlertModal";
 
 export function Header() {
-  const { fetchedUser } = useAuthContext();
   const { toggleTheme } = useTheme();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -30,6 +24,7 @@ export function Header() {
   function handleCloseModal() {
     setIsAddModalOpen(false);
   }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -96,7 +91,6 @@ export function Header() {
             >
               <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
             </Button>
           </div>
         </div>

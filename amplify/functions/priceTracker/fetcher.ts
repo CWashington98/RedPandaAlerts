@@ -4,7 +4,6 @@ import { generateClient } from "@aws-amplify/api";
 const client = generateClient<Schema>({
   authMode: "iam",
 });
-
 export const fetchAllStockData = async () => {
   let allStockData: Schema["StockPrice"]["type"][] = [];
   let tokenToUse: string | undefined = undefined;

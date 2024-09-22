@@ -7,7 +7,5 @@ export const priceAlert = defineFunction({
   timeoutSeconds: 120,
   environment: {
     // Ensure all necessary environment variables are included
-    GRAPHQL_ENDPOINT: process.env.API_REDPANDALEVELS_GRAPHQLAPIENDPOINTOUTPUT,
-    AWS_REGION: process.env.AWS_REGION || "us-east-1",
   },
 });

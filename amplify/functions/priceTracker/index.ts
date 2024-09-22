@@ -21,34 +21,25 @@ const { Sha256 } = crypto;
  * @type {import('@types/aws-lambda').APIGatewayProxyHandler}
  */
 
-export const handler = async (event) => {
+export const handler = async (event: any) => {
   console.log(`EVENT: ${JSON.stringify(event)}`);
-
-  const endpoint = new URL(GRAPHQL_ENDPOINT);
-
-  const signer = new SignatureV4({
-    credentials: defaultProvider(),
-    region: AWS_REGION,
-    service: "appsync",
-    sha256: Sha256,
-  });
 
   let statusCode = 200;
   let body;
   let response;
 
-  //  pull stockData
-  const stockData = await fetchAllStockData(signer, endpoint);
-  const stockPromises = [];
-  let results;
-  console.log("tickers: ", stockData.body);
+  // //  pull stockData
+  // const stockData = await fetchAllStockData(signer, endpoint);
+  // const stockPromises = [];
+  // let results;
+  // console.log("tickers: ", stockData.body);
 
-  for (const stock of stockData.body) {
-    stockPromises.push(checkAndUpdateStock(stock, signer, endpoint));
-  }
-  results = await Promise.allSettled(stockPromises);
+  // for (const stock of stockData.body) {
+  //   stockPromises.push(checkAndUpdateStock(stock, signer, endpoint));
+  // }
+  // results = await Promise.allSettled(stockPromises);
 
-  console.log("results: ", results);
+  // console.log("results: ", results);
   // if (body.errors) statusCode = 400;
 
   return {

@@ -5,23 +5,28 @@ import {
   AlertDialogDescription,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@/components/ui/alert-dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+} from "@web/components/ui/alert-dialog";
+import { Checkbox } from "@web/components/ui/checkbox";
+import { Dialog, DialogContent, DialogTitle } from "@web/components/ui/dialog";
+import { Label } from "@web/components/ui/label";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+} from "@web/components/ui/select";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@web/components/ui/tabs";
 import React, { useEffect, useRef, useState } from "react";
 import {
   AlertDialogHeader,
   AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
+} from "@web/components/ui/alert-dialog";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { DialogHeader, DialogFooter } from "./ui/dialog";
@@ -443,6 +448,9 @@ const AddPriceAlertModal = ({ isOpen, onClose }: AddPriceAlertModalProps) => {
     const currentYear = currentDate.getFullYear();
 
     try {
+      if (!fetchedUser?.id) {
+        throw new Error("User ID not found");
+      }
       await client.models.StockPrice.create({
         stockName: stock.stockName || "",
         tickerSymbol: stock.tickerSymbol || "",
@@ -452,7 +460,7 @@ const AddPriceAlertModal = ({ isOpen, onClose }: AddPriceAlertModalProps) => {
         isCrypto: stock.isCrypto || false,
         month: currentMonth,
         year: currentYear,
-        userId: "",
+        userId: fetchedUser?.id,
       });
       toast({
         title: "Success",

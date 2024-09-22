@@ -1,6 +1,6 @@
 import { Handler, APIGatewayProxyResult } from "aws-lambda";
 import { fetchAllStockData } from "./fetcher";
-import { checkAndUpdateStock } from "./getPrice.ts";
+// import { checkAndUpdateStock } from "./getPrice.ts";
 import { Amplify } from "aws-amplify";
 import { env } from "$amplify/env/priceTracker";
 import { Schema } from "../../data/resource";
@@ -44,36 +44,36 @@ export const handler: Handler = async (
   let statusCode = 200;
   let body: any = {};
 
-  try {
+  // try {
     // Fetch all stock data from the database
     const stockData: Schema["StockPrice"]["type"][] = await fetchAllStockData();
 
     console.log("Fetched stock data:", stockData);
 
     // Process each stock
-    const stockPromises = stockData.map((stock) => checkAndUpdateStock(stock));
+    // const stockPromises = stockData.map((stock) => checkAndUpdateStock(stock));
 
-    const results = await Promise.allSettled(stockPromises);
-    console.log("Stock processing results:", results);
+  //   const results = await Promise.allSettled(stockPromises);
+  //   console.log("Stock processing results:", results);
 
-    // Optionally handle any rejections or summarize results
-    const failedPromises = results.filter(
-      (result) => result.status === "rejected"
-    );
-    if (failedPromises.length > 0) {
-      statusCode = 207; // Multi-Status
-      body.message = `${failedPromises.length} out of ${results.length} stock updates failed.`;
-    } else {
-      body.message = "All stock data processed successfully.";
-    }
-  } catch (error) {
-    console.error("Error processing stock data:", error);
-    statusCode = 500;
-    body = {
-      error: "Internal Server Error",
-      message: error instanceof Error ? error.message : String(error),
-    };
-  }
+  //   // Optionally handle any rejections or summarize results
+  //   const failedPromises = results.filter(
+  //     (result) => result.status === "rejected"
+  //   );
+  //   if (failedPromises.length > 0) {
+  //     statusCode = 207; // Multi-Status
+  //     body.message = `${failedPromises.length} out of ${results.length} stock updates failed.`;
+  //   } else {
+  //     body.message = "All stock data processed successfully.";
+  //   }
+  // } catch (error) {
+  //   console.error("Error processing stock data:", error);
+  //   statusCode = 500;
+  //   body = {
+  //     error: "Internal Server Error",
+  //     message: error instanceof Error ? error.message : String(error),
+  //   };
+  // }
 
   return {
     statusCode,
