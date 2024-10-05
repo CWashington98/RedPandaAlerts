@@ -69,6 +69,7 @@ export default function SignUp() {
   });
 
   const onSubmit = async (data: SignUpInput) => {
+    console.log("running signUp onSubmit");
     if (data.password !== data.confirmPassword) {
       toast({
         variant: "destructive",
@@ -166,7 +167,7 @@ export default function SignUp() {
 
   return (
     <FormProvider {...methods}>
-      <Card className="w-[350px]">
+      <Card className="w-[350px] sm:w-[400px] md:w-[500px] lg:w-[600px]">
         <CardHeader>
           <CardTitle>Sign Up</CardTitle>
           <CardDescription>Create your account</CardDescription>
@@ -176,7 +177,7 @@ export default function SignUp() {
             <Form {...methods}>
               <form
                 onSubmit={methods.handleSubmit(onSubmit)}
-                className="space-y-4"
+                className="space-y-4 w-full max-w-md mx-auto"
               >
                 <FormField
                   control={methods.control}

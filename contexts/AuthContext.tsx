@@ -13,14 +13,14 @@ type AuthContextType = {
   cognitoUser?: string | null;
   fetchedUser?: Schema["User"]["type"] | null;
   loading: boolean;
-  checkUser: () => Promise<void>;
+  checkUser: () => Promise<boolean>;
 };
 
 export const AuthContext = createContext<AuthContextType>({
   cognitoUser: null,
   fetchedUser: null,
   loading: true,
-  checkUser: async () => {},
+  checkUser: async () => false,
 });
 
 const client = generateClient<Schema>();
@@ -34,6 +34,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
     null
   );
   const [loading, setLoading] = useState<boolean>(true);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState<boolean>(false);
   const router = useRouter();
 
   const fetchUser = async (phoneOrEmail: string) => {
@@ -49,7 +50,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("fetchUser", data, errors);
       if (data && data.length > 0) {
         setFetchedUser(data[0]);
-        router.push("/dashboard");
+        router.push("/dashboard");;
       } else {
         setFetchedUser(null);
         router.push("/");
@@ -62,7 +63,9 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const checkUser = async () => {
+    if (hasCheckedAuth) return fetchedUser?.id ? true : false;
     setLoading(true);
+    let returnValue = false;
     try {
       const authUser = await getCurrentUser();
       console.log("authUser", authUser);
@@ -76,14 +79,16 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         throw new Error("User not found");
       }
-      router.push("/dashboard"); // Redirect to dashboard after successful sign in
+      returnValue = true; // User is authenticated
     } catch (error) {
       console.warn("error checkUser", error);
       setCognitoUser(null);
       setFetchedUser(null);
-      router.push("/");
+      returnValue = false; // User is not authenticated
     } finally {
       setLoading(false);
+      setHasCheckedAuth(true);
+      return returnValue;
     }
   };
 
@@ -103,6 +108,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
         case "signedOut":
           setCognitoUser(null);
           setFetchedUser(null);
+          setHasCheckedAuth(false);
           router.push("/");
           break;
       }
@@ -114,8 +120,10 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    checkUser();
-  }, []);
+    if (!hasCheckedAuth) {
+      checkUser();
+    }
+  }, [hasCheckedAuth]);
 
   const value = {
     cognitoUser,

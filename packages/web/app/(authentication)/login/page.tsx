@@ -49,6 +49,7 @@ export default function Login() {
 
   async function onSubmit(values: LoginInput) {
     setIsLoading(true);
+    console.log("running login onSubmit");
     try {
       const cognitoUser = await signIn({
         username: values.email,
@@ -75,7 +76,7 @@ export default function Login() {
   }
 
   return (
-    <Card className="w-[350px] mx-auto mt-10">
+    <Card className="w-[350px] sm:w-[400px] md:w-[500px] lg:w-[600px] mx-auto mt-10">
       <CardHeader>
         <CardTitle>Sign In</CardTitle>
         <CardDescription>
@@ -84,7 +85,7 @@ export default function Login() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 w-full max-w-md mx-auto">
             <FormField
               control={form.control}
               name="email"
@@ -116,7 +117,7 @@ export default function Login() {
               )}
             />
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Loging In..." : "Sign In"}
+              {isLoading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
         </Form>

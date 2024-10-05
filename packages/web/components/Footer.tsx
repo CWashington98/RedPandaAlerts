@@ -10,11 +10,11 @@ export function Footer() {
             rel="noreferrer"
             className="font-medium underline underline-offset-4"
           >
-            Your Name
+            CWashington
           </a>
           . The source code is available on{" "}
           <a
-            href="https://github.com/yourusername/your-repo"
+            href="https://github.com/CWashington98/RedPandaAlerts"
             target="_blank"
             rel="noreferrer"
             className="font-medium underline underline-offset-4"
