@@ -824,9 +824,6 @@ video {
 .h-px {
   height: 1px;
 }
-.h-screen {
-  height: 100vh;
-}
 .max-h-96 {
   max-height: 24rem;
 }
@@ -1890,12 +1887,12 @@ body {
     width: 180px;
   }
 
-  .sm\:w-full {
-    width: 100%;
-  }
-
   .sm\:w-\[400px\] {
     width: 400px;
+  }
+
+  .sm\:w-full {
+    width: 100%;
   }
 
   .sm\:flex-row {
@@ -2043,10 +2040,6 @@ body {
 
   .lg\:w-\[600px\] {
     width: 600px;
-  }
-
-  .lg\:w-\[800px\] {
-    width: 800px;
   }
 
   .lg\:grid-cols-2 {

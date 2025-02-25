@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,14 +23,33 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@/web/*": ["./packages/web/*"],
-      "@/mobile/*": ["./packages/mobile/*"],
-      "@/shared/*": ["./packages/shared/*"],
-      "@/amplify/*": ["./amplify/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@/web/*": [
+        "./packages/web/*"
+      ],
+      "@/mobile/*": [
+        "./packages/mobile/*"
+      ],
+      "@/shared/*": [
+        "./packages/shared/*"
+      ],
+      "@/amplify/*": [
+        "./amplify/*"
+      ]
     },
     "baseUrl": "."
   },
-  "include": ["packages/web/components/next-env.d.tscomponents/next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "amplify"]
+  "include": [
+    "packages/web/components/next-env.d.tscomponents/next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "amplify"
+  ],
+  "extends": "expo/tsconfig.base"
 }
